@@ -1,0 +1,2 @@
+defmodule Coapex do
+end
