@@ -25,6 +25,16 @@ defmodule CoAP.Message do
     end
   end
 
+  def method(msg) do
+    case {msg.header.code_class, msg.header.code_detail} do
+      {0, 1} -> :GET
+      {0, 2} -> :POST
+      {0, 3} -> :PUT
+      {0, 4} -> :DELETE
+      _ -> :unknown
+    end
+  end
+
   def code(msg) do
     "#{msg.header.code_class}.#{msg.header.code_detail}"
   end

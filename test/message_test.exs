@@ -2,11 +2,11 @@ defmodule CoAP.Message.Test do
   use ExUnit.Case
 
   test "the truth" do
-    msg = <<0x40, 0x1, 0x30, 0x39, 0x21, 0x3,
+    data = <<0x40, 0x1, 0x30, 0x39, 0x21, 0x3,
       0x26, 0x77, 0x65, 0x65, 0x74, 0x61, 0x67,
       0xff, ?h, ?i>>
 
-    parsed = CoAP.Parser.parse(msg)
+    msg = CoAP.Parser.parse(data)
 
     expected =
       %CoAP.Message{
@@ -25,8 +25,12 @@ defmodule CoAP.Message.Test do
         payload: "hi"
       }
 
-    assert parsed == expected
-    assert CoAP.Serializer.serialize(parsed) == msg
+
+    assert CoAP.Message.type(msg) == :confirmable
+    assert CoAP.Message.class(msg) == :request
+    assert CoAP.Message.method(msg) == :GET
+    assert msg == expected
+    assert CoAP.Serializer.serialize(msg) == data
   end
 
 end
