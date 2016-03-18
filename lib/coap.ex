@@ -99,6 +99,10 @@ defmodule CoAP.Parser do
     put_in(msg.header, hdr) |> parse_options(rest)
   end
 
+  def parse_options(msg, <<>>) do
+    msg
+  end
+
   def parse_options(msg, <<@payload_marker, payload :: binary>>) do
     parse_payload(msg, payload)
   end
@@ -126,7 +130,6 @@ defmodule CoAP.Parser do
         opt = %CoAP.Option{number: previous.number + option_delta, value: option_value}
         [opt | opts]
     end
-
     update_in(msg.options, update) |> parse_options(rest)
   end
 
@@ -200,6 +203,10 @@ defmodule CoAP.Serializer do
       true ->
         {14, <<number-269 :: unsigned-size(16)>>}
     end
+  end
+
+  def serialize_payload(<<>>) do
+    <<>>
   end
 
   def serialize_payload(payload) do
