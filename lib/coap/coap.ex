@@ -73,7 +73,7 @@ defmodule CoAP do
   end
 
   @spec response_code(value :: {integer, integer}) :: atom
-  def response_code(value) when is_integer(value) do
+  def response_code(value = {code_class, code_detail}) when is_integer(code_class) and is_integer(code_detail) do
     @responses[value]
   end
 
