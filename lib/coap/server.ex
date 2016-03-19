@@ -19,7 +19,7 @@ defmodule CoAP.Server.Adapter do
     end
   end
 
-  def handle_cast({:message, msg, from}, state) do
+  def handle_cast({:message, from, msg}, state) do
     case CoAP.Message.type(msg) do
       :confirmable ->
         inner_call state, msg, from, state.module.handle_confirmable(msg, from, state.inner_state)
@@ -28,17 +28,22 @@ defmodule CoAP.Server.Adapter do
     end
   end
 
-  def handle_cast({:invalid, error, from}, state) do
-    inner_cast state, state.module.handle_invalid(error, from, state)
+  def handle_cast({:invalid, from, error}, state) do
+    #TODO make the last argument a function that receives the inner_state
+    # like &(&1.handle_invalid(error, from, &2))
+    inner_cast state, state.module.handle_invalid(error, from, state.inner_state)
   end
 
   def handle_info({:datagram, {_udp, address, port, data}}, state) do
+    IO.inspect {:from, address, port, data}
     from = {address, port}
     try do
       msg = CoAP.Parser.parse(data)
-      GenServer.cast(self, {:message, msg, from})
+      GenServer.cast(self, {:message, from, msg})
     rescue
-      e -> GenServer.cast(self, {:invalid, e, from})
+      e ->
+        IO.inspect e
+        GenServer.cast(self, {:invalid, from, e})
     end
     {:noreply, state}
   end
@@ -108,6 +113,7 @@ defmodule CoAP.Server.Adapter do
   end
 
   defp udp_send(udp, {from_addr, from_port}, response) do
+    IO.inspect {:to, from_addr, :from_port, response}
     try do
       data = CoAP.Serializer.serialize(response)
       case UDP.send(udp, from_addr, from_port, data) do
@@ -182,7 +188,7 @@ defmodule CoAP.Server do
 end
 
 
-defmodule AServer do
+defmodule OKServer do
   use CoAP.Server
 
   def start_link do
@@ -206,6 +212,12 @@ defmodule AServer do
 
   def handle_invalid(error, from, :nada) do
     IO.puts("Error #{inspect error} from #{inspect from}")
+    {:noreply, :nada}
+  end
+
+#TODO remove
+  def handle_invalid(error, from, _blah) do
+    IO.puts("BLAH Error #{inspect error} from #{inspect from}")
     {:noreply, :nada}
   end
 
