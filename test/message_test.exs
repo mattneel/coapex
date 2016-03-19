@@ -1,6 +1,7 @@
 # binaries shameless copied from https://github.com/dustin/go-coap/blob/master/message_test.go
 defmodule CoAP.Message.Test do
   use ExUnit.Case
+  use CoAP.Codes
 
   test "the truth" do
     data = <<0x40, 0x01, 0x30, 0x39, 0x21, 0x03, 0x26, 0x77,
@@ -60,6 +61,29 @@ defmodule CoAP.Message.Test do
 
     assert msg == expected
     assert CoAP.Serializer.serialize(msg) == data
+  end
+
+  test "blah" do
+    data = <<0x40, 0x01, 0x7d, 0x34, 0xbb, "temperature" :: binary>>
+
+    msg = CoAP.Parser.parse(data)
+
+    expected = %CoAP.Message{
+      header: %CoAP.Header{
+        version: 1,
+        code_class: 0,
+        code_detail: 1,
+        message_id: 32052,
+        token: "",
+        type: 0
+      },
+      options: [
+        %CoAP.Option{number: 11, value: "temperature"}
+      ],
+      payload: ""
+    }
+
+    assert msg == expected
   end
 
 end

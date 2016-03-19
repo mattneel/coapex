@@ -14,9 +14,11 @@ defmodule UDP do
 
   alias :gen_udp, as: GenUDP
 
-  @defaults [port: 3535, handlers: []]
+  @defaults [port: 3535, handlers: [], udp_options: []]
 
   def start_link(options) do
+    options = is_list(options) && options || []
+    options = Keyword.merge(@defaults, options)
     GenServer.start_link(__MODULE__, options)
   end
 
@@ -24,7 +26,7 @@ defmodule UDP do
     for handler <- options[:handlers],
       do: listen(self, handler)
 
-    with {:ok, socket} <- GenUDP.open(options[:port]),
+    with {:ok, socket} <- GenUDP.open(options[:port], options[:udp_options]),
          {:ok, events} <- GenEvent.start_link([]),
          do: {:ok, %UDP.State{socket: socket, events: events}}
   end
@@ -51,6 +53,11 @@ defmodule UDP do
 
   def send(udp, address, port, msg) do
     GenServer.call(udp, {:send, address, port, msg})
+  end
+
+  def send(udp, uri, msg) do
+    parsed_uri = URI.parse(uri)
+    send(udp, String.to_atom(parsed_uri.host), parsed_uri.port, msg)
   end
 
   def listen(udp, handler \\ self) when is_pid(handler) do
