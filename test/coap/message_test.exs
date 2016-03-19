@@ -2,7 +2,7 @@ defmodule CoAP.Message.Test do
   use ExUnit.Case
 
   # binaries shameless copied from https://github.com/dustin/go-coap/blob/master/message_test.go
-  test "the truth" do
+  test "handles messages with options" do
     data = <<0x40, 0x01, 0x30, 0x39, 0x21, 0x03, 0x26, 0x77,
              0x65, 0x65, 0x74, 0x61, 0x67, 0xff,   ?h,   ?i>>
 
@@ -34,7 +34,7 @@ defmodule CoAP.Message.Test do
   end
 
   # binaries shameless copied from https://github.com/dustin/go-coap/blob/master/message_test.go
-  test "two" do
+  test "handles messages with large options" do
     data = <<0x40, 0x01, 0x30, 0x39, 0xbd, 0x19, 0x74, 0x68, 0x69,
              0x73, 0x5f, 0x70, 0x61, 0x74, 0x68, 0x5f, 0x69, 0x73,
              0x5f, 0x6c, 0x6f, 0x6e, 0x67, 0x65, 0x72, 0x5f, 0x74,
@@ -63,7 +63,7 @@ defmodule CoAP.Message.Test do
     assert CoAP.Serializer.serialize(msg) == data
   end
 
-  test "blah" do
+  test "handles messages with id" do
     data = <<0x40, 0x01, 0x7d, 0x34, 0xbb, "temperature" :: binary>>
 
     msg = CoAP.Parser.parse(data)
@@ -84,9 +84,10 @@ defmodule CoAP.Message.Test do
     }
 
     assert msg == expected
+    assert CoAP.Serializer.serialize(msg) == data
   end
 
-  test "bleh" do
+  test "handles messages with payload" do
     data = <<0x61, 0x69, 0x7d, 0x35, 0x41, 0xff, "22.3 C" :: binary>>
 
     msg = CoAP.Parser.parse(data)
@@ -106,6 +107,7 @@ defmodule CoAP.Message.Test do
       }
 
     assert msg == expected
+    assert CoAP.Serializer.serialize(msg) == data
   end
 
 end
