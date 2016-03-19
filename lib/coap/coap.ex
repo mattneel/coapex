@@ -7,6 +7,12 @@ defmodule CoAP do
 
   @type msg :: Message.t
 
+  @type code_pair :: {integer, integer}
+
+  @type name :: atom
+
+  @type value :: integer
+
   @spec version :: integer
   def version do
     @version
@@ -22,42 +28,42 @@ defmodule CoAP do
     code_pair(header) == {0, 0}
   end
 
-  @spec type(msg) :: atom
+  @spec type(msg) :: name
   def type(%Message{header: header}) do
     type(header)
   end
 
-  @spec type(header) :: atom
+  @spec type(header) :: name
   def type(%Header{type: type}) do
     @types[type]
   end
 
-  @spec type(number :: integer) :: atom
-  def type(number) when is_integer(number) do
-    @types[number]
+  @spec type(value) :: name
+  def type(value) when is_integer(value) do
+    @types[value]
   end
 
-  @spec type(name :: atom) :: integer
+  @spec type(name) :: integer
   def type(name) when is_atom(name) do
     @types_reverse[name]
   end
 
-  @spec class(msg) :: atom
+  @spec class(msg) :: name
   def class(%Message{header: header}) do
     class(header)
   end
 
-  @spec class(header) :: atom
+  @spec class(header) :: name
   def class(%Header{code_class: code_class}) do
     @classes[code_class]
   end
 
-  @spec method(msg) :: atom
+  @spec method(msg) :: name
   def method(%Message{header: header}) do
     method(header)
   end
 
-  @spec method(header) :: atom
+  @spec method(header) :: name
   def method(header = %Header{}) do
     @methods[code_pair(header)]
   end
@@ -72,12 +78,12 @@ defmodule CoAP do
     :io.format "~B.~2..0B", Tuple.to_list(code_pair(header))
   end
 
-  @spec response_code(value :: {integer, integer}) :: atom
-  def response_code(value = {code_class, code_detail}) when is_integer(code_class) and is_integer(code_detail) do
-    @responses[value]
+  @spec response_code(code_pair) :: name
+  def response_code(code_pair = {_code_class, _code_detail}) do
+    @responses[code_pair]
   end
 
-  @spec response_code(name :: atom) :: {integer, integer}
+  @spec response_code(name) :: code_pair
   def response_code(name) when is_atom(name) do
     @responses_reverse[name]
   end
