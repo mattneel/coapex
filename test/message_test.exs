@@ -86,4 +86,26 @@ defmodule CoAP.Message.Test do
     assert msg == expected
   end
 
+  test "bleh" do
+    data = <<0x61, 0x69, 0x7d, 0x35, 0x41, 0xff, "22.3 C" :: binary>>
+
+    msg = CoAP.Parser.parse(data)
+
+    expected =
+      %CoAP.Message{
+        header: %CoAP.Header{
+          version: 1,
+          code_class: 3,
+          code_detail: 9,
+          message_id: 32053,
+          token: "A",
+          type: 2,
+        },
+        options: [],
+        payload: "22.3 C"
+      }
+
+    assert msg == expected
+  end
+
 end
