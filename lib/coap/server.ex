@@ -4,6 +4,58 @@ defmodule CoAP.Server.State do
 
 end
 
+defmodule CoAP.Server do
+
+  defmacro __using__(_) do
+    quote do
+      @behaviour CoAP.Server
+    end
+  end
+
+  def start_link(module, args, opts \\ []) do
+    GenServer.start_link(CoAP.Server.Adapter, {module, args, opts})
+  end
+
+  @type sender :: {:inet.ip_address | :inet.hostname, :inet.port_number}
+
+  @callback init(args :: term) ::
+    {:ok, state} |
+    {:ok, state, timeout | :hibernate} |
+    :ignore |
+    {:stop, reason :: any} when state: any
+
+  @callback handle_confirmable(message :: CoAP.Message.t, from :: sender, state :: term) ::
+    {:reply, reply, new_state} |
+    {:reply, reply, new_state, timeout | :hibernate} | #TODO {:reply_async, _}
+    {:noreply, new_state} |
+    {:noreply, new_state, timeout | :hibernate} |
+    {:stop, reason, reply, new_state} |
+    {:stop, reason, new_state} when reply: term, new_state: term, reason: term
+
+  @callback handle_other(message :: CoAP.Message.t, from :: sender, state :: term) ::
+    {:noreply, new_state} |
+    {:noreply, new_state, timeout | :hibernate} |
+    {:stop, reason :: term, new_state} when new_state: term
+
+  @callback handle_invalid(error :: term, from :: sender, state :: term) ::
+    {:noreply, new_state} |
+    {:noreply, new_state, timeout | :hibernate} |
+    {:stop, reason :: term, new_state} when new_state: term
+
+  @callback handle_info(info :: :timeout | term, state :: term) ::
+    {:noreply, new_state} |
+    {:noreply, new_state, timeout | :hibernate} |
+    {:stop, reason :: term, new_state} when new_state: term
+
+  @callback terminate(reason, state :: term) ::
+    term when reason: :normal | :shutdown | {:shutdown, term} | term
+
+  @callback code_change(old_vsn, state :: term, extra :: term) ::
+    {:ok, new_state :: term} |
+    {:error, reason :: term} when old_vsn: term | {:down, term}
+
+end
+
 defmodule CoAP.Server.Adapter do
   use GenServer
   alias CoAP.Server.State
@@ -16,6 +68,17 @@ defmodule CoAP.Server.Adapter do
         inner_init(state, inner_args)
       error ->
         error
+    end
+  end
+
+  defp inner_init(state, inner_args) do
+    case state.module.init(inner_args) do
+      {:ok, inner_state} ->
+        {:ok, update_state(state, inner_state)}
+      {:ok, inner_state, timeout} ->
+        {:ok, update_state(state, inner_state), timeout}
+      other ->
+        other
     end
   end
 
@@ -97,17 +160,6 @@ defmodule CoAP.Server.Adapter do
     end
   end
 
-  defp inner_init(state, inner_args) do
-    case state.module.init(inner_args) do
-      {:ok, inner_state} ->
-        {:ok, update_state(state, inner_state)}
-      {:ok, inner_state, timeout} ->
-        {:ok, update_state(state, inner_state), timeout}
-      other ->
-        other
-    end
-  end
-
   defp udp_send(udp, {from_addr, from_port}, response) do
     IO.inspect {:to, from_addr, :from_port, response}
     try do
@@ -126,63 +178,6 @@ defmodule CoAP.Server.Adapter do
   end
 
 end
-
-defmodule CoAP.Server do
-
-  defmacro __using__(_) do
-    quote do
-      @behaviour CoAP.Server
-    end
-  end
-
-  def start_link(module, args, opts \\ []) do
-    GenServer.start_link(CoAP.Server.Adapter, {module, args, opts})
-  end
-
-  @type sender :: {:inet.ip_address | :inet.hostname, :inet.port_number}
-
-  @callback init(args :: term) ::
-    {:ok, state} |
-    {:ok, state, timeout | :hibernate} |
-    :ignore |
-    {:stop, reason :: any} when state: any
-
-  @callback handle_confirmable(message :: CoAP.Message.t, from :: sender, state :: term) ::
-    {:reply, reply, new_state} |
-    {:reply, reply, new_state, timeout | :hibernate} | #TODO {:reply_async, _}
-    {:noreply, new_state} |
-    {:noreply, new_state, timeout | :hibernate} |
-    {:stop, reason, reply, new_state} |
-    {:stop, reason, new_state} when reply: term, new_state: term, reason: term
-
-  @callback handle_other(message :: CoAP.Message.t, from :: sender, state :: term) ::
-    {:noreply, new_state} |
-    {:noreply, new_state, timeout | :hibernate} |
-    {:stop, reason :: term, new_state} when new_state: term
-
-  @callback handle_invalid(error :: term, from :: sender, state :: term) ::
-    {:noreply, new_state} |
-    {:noreply, new_state, timeout | :hibernate} |
-    {:stop, reason :: term, new_state} when new_state: term
-
-  @callback handle_info(info :: :timeout | term, state :: term) ::
-    {:noreply, new_state} |
-    {:noreply, new_state, timeout | :hibernate} |
-    {:stop, reason :: term, new_state} when new_state: term
-
-  @callback terminate(reason, state :: term) ::
-    term when reason: :normal | :shutdown | {:shutdown, term} | term
-
-  @callback code_change(old_vsn, state :: term, extra :: term) ::
-    {:ok, new_state :: term} |
-    {:error, reason :: term} when old_vsn: term | {:down, term}
-
-  # {:reply, _}
-  # {:noreply, _}
-  # {:reply_async , _}
-
-end
-
 
 defmodule OKServer do
   use CoAP.Server
@@ -208,12 +203,6 @@ defmodule OKServer do
 
   def handle_invalid(error, from, :nada) do
     IO.puts("Error #{inspect error} from #{inspect from}")
-    {:noreply, :nada}
-  end
-
-#TODO remove
-  def handle_invalid(error, from, _blah) do
-    IO.puts("BLAH Error #{inspect error} from #{inspect from}")
     {:noreply, :nada}
   end
 
