@@ -1,8 +1,7 @@
-# binaries shameless copied from https://github.com/dustin/go-coap/blob/master/message_test.go
 defmodule CoAP.Message.Test do
   use ExUnit.Case
-  use CoAP.Codes
 
+  # binaries shameless copied from https://github.com/dustin/go-coap/blob/master/message_test.go
   test "the truth" do
     data = <<0x40, 0x01, 0x30, 0x39, 0x21, 0x03, 0x26, 0x77,
              0x65, 0x65, 0x74, 0x61, 0x67, 0xff,   ?h,   ?i>>
@@ -27,13 +26,14 @@ defmodule CoAP.Message.Test do
       }
 
 
-    assert CoAP.Message.type(msg) == :confirmable
-    assert CoAP.Message.class(msg) == :request
-    assert CoAP.Message.method(msg) == :GET
+    assert CoAP.type(msg) == :confirmable
+    assert CoAP.class(msg) == :request
+    assert CoAP.method(msg) == :GET
     assert msg == expected
     assert CoAP.Serializer.serialize(msg) == data
   end
 
+  # binaries shameless copied from https://github.com/dustin/go-coap/blob/master/message_test.go
   test "two" do
     data = <<0x40, 0x01, 0x30, 0x39, 0xbd, 0x19, 0x74, 0x68, 0x69,
              0x73, 0x5f, 0x70, 0x61, 0x74, 0x68, 0x5f, 0x69, 0x73,
