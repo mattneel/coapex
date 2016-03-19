@@ -1,10 +1,3 @@
-
-# {:ok, udp} = UDP.start_link(port: 3535, handlers: [])
-# UDP.listen(udp)
-
-# {:ok, udp} = UDP.start_link(port: 3536, handlers: [])
-# UDP.send(udp, {127,0,0,1}, 3535, "hello")
-
 defmodule UDP.State do
   defstruct socket: nil, events: nil
 end

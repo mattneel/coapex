@@ -41,9 +41,7 @@ defmodule CoAP.Server.Adapter do
       msg = CoAP.Parser.parse(data)
       GenServer.cast(self, {:message, from, msg})
     rescue
-      e ->
-        IO.inspect e
-        GenServer.cast(self, {:invalid, from, e})
+      e -> GenServer.cast(self, {:invalid, from, e})
     end
     {:noreply, state}
   end
