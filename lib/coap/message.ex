@@ -27,4 +27,18 @@ defmodule CoAP.Message do
     CoAP.Header.code(header)
   end
 
+  def ack(msg) do
+    {code_class, code_detail} = @responses_reverse[:empty]
+    %CoAP.Message{
+      header: %CoAP.Header{
+        version: @version,
+        type: @types_reverse[:acknowledgement],
+        code_class: code_class,
+        code_detail: code_detail,
+        message_id: msg.header.message_id,
+        token: msg.header.token
+      }
+    }
+  end
+
 end

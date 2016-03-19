@@ -18,6 +18,8 @@ defmodule CoAP.Codes do
         3 => :reset
       }
 
+      @types_reverse MapUtil.invert(@types)
+
       @classes %{
         0 => :request,
         2 => :success_response,
@@ -33,6 +35,7 @@ defmodule CoAP.Codes do
       }
 
       @responses %{
+        {0,  0} => :empty,
         {2,  1} => :created,
         {2,  2} => :deleted,
         {2,  3} => :valid,
