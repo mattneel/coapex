@@ -59,7 +59,6 @@ defmodule CoAP.Client do
   end
 
   def handle_info({:datagram, {_udp, address, port, data}}, state) do
-    IO.inspect {:from, address, port, data}
     from = {address, port}
     try do
       msg = CoAP.Parser.parse(data)
@@ -73,7 +72,6 @@ defmodule CoAP.Client do
   defp udp_send(udp, {to_addr, to_port}, request) do
     try do
       data = CoAP.Serializer.serialize(request)
-      IO.inspect {:to, to_addr, to_port, request}
       UDP.send(udp, to_addr, to_port, data)
     rescue
       e -> {:error, e}

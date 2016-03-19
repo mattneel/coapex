@@ -126,7 +126,6 @@ defmodule CoAP.Server.Adapter do
   end
 
   def handle_info({:datagram, {_udp, address, port, data}}, state) do
-    IO.inspect {:from, address, port, data}
     from = {address, port}
     try do
       msg = Parser.parse(data)
@@ -190,7 +189,6 @@ defmodule CoAP.Server.Adapter do
   end
 
   defp udp_send(udp, {from_addr, from_port}, response) do
-    IO.inspect {:to, from_addr, :from_port, response}
     try do
       data = Serializer.serialize(response)
       case UDP.send(udp, from_addr, from_port, data) do
