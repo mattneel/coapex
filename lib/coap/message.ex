@@ -6,7 +6,7 @@ defmodule CoAP.Message do
     update_in(msg.options, &Enum.sort_by(&1, fn opt -> opt.number end))
   end
 
-  def ack(msg) do
+  def ack(request_msg) do
     {code_class, code_detail} = CoAP.response_code(:empty)
     %CoAP.Message{
       header: %CoAP.Header{
@@ -14,8 +14,8 @@ defmodule CoAP.Message do
         type: CoAP.type(:acknowledgement),
         code_class: code_class,
         code_detail: code_detail,
-        message_id: msg.header.message_id,
-        token: msg.header.token
+        message_id: request_msg.header.message_id,
+        token: request_msg.header.token
       }
     }
   end
