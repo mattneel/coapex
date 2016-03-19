@@ -13,7 +13,7 @@ defmodule CoAP do
 
   @type value :: integer
 
-  @spec version :: integer
+  @spec version :: value
   def version do
     @version
   end
@@ -43,7 +43,7 @@ defmodule CoAP do
     @types[value]
   end
 
-  @spec type(name) :: integer
+  @spec type(name) :: value
   def type(name) when is_atom(name) do
     @types_reverse[name]
   end
