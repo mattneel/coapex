@@ -22,16 +22,14 @@ defmodule CoAP.Server.Adapter do
   def handle_cast({:message, from, msg}, state) do
     case CoAP.Message.type(msg) do
       :confirmable ->
-        inner_call state, msg, from, state.module.handle_confirmable(msg, from, state.inner_state)
+        inner_call state, msg, from, &(&1.handle_confirmable(msg, from, &2))
       _ ->
-        inner_cast state, state.module.handle_other(msg, from, state.inner_state)
+        inner_cast state, &(&1.handle_other(msg, from, &2))
     end
   end
 
   def handle_cast({:invalid, from, error}, state) do
-    #TODO make the last argument a function that receives the inner_state
-    # like &(&1.handle_invalid(error, from, &2))
-    inner_cast state, state.module.handle_invalid(error, from, state.inner_state)
+    inner_cast state, &(&1.handle_invalid(error, from, &2))
   end
 
   def handle_info({:datagram, {_udp, address, port, data}}, state) do
@@ -47,13 +45,13 @@ defmodule CoAP.Server.Adapter do
   end
 
   def handle_info(info, state) do
-    inner_cast state, state.module.handle_info(info, state.inner_state)
+    inner_cast state, &(&1.handle_info(info, &2))
   end
 
   # it has to return a message to a cast
-  defp inner_call(state, msg, from, update) do
+  defp inner_call(state, msg, from, action) do
     #TODO copy token from original msg, if missing
-    case update do
+    case action.(state.module, state.inner_state) do
       {:reply, reply, new_inner_state} ->
         udp_send(state.udp, from, reply)
         {:noreply, update_state(state, new_inner_state)}
@@ -75,8 +73,8 @@ defmodule CoAP.Server.Adapter do
     end
   end
 
-  defp inner_cast(state, update) do
-    case update do
+  defp inner_cast(state, action) do
+    case action.(state.module, state.inner_state) do
       {:noreply, new_inner_state} ->
         {:noreply, update_state(state, new_inner_state)}
       {:noreply, new_inner_state, timeout} ->
