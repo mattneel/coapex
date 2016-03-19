@@ -9,6 +9,34 @@ defmodule CoAP.Server do
   defmacro __using__(_) do
     quote do
       @behaviour CoAP.Server
+
+      def init(args) do
+        {:ok, args}
+      end
+
+      def handle_invalid(_error, _from, state) do
+        {:noreply, state}
+      end
+
+      def handle_info(_info, state) do
+        {:noreply, state}
+      end
+
+      def terminate(_reason, _state) do
+        :ok
+      end
+
+      def code_change(_old_vsn, state, _extra) do
+        {:ok, state}
+      end
+
+      defoverridable [
+        init: 1,
+        handle_invalid: 3,
+        handle_info: 2,
+        terminate: 2,
+        code_change: 3]
+
     end
   end
 
