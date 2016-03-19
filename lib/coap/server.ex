@@ -8,7 +8,7 @@ defmodule CoAP.Server do
 
   defmacro __using__(_) do
     quote do
-      @behaviour CoAP.Server
+      @behaviour unquote(__MODULE__)
 
       def init(args) do
         {:ok, args}
@@ -86,6 +86,8 @@ end
 
 defmodule CoAP.Server.Adapter do
   use GenServer
+
+  alias CoAP.{Message, Parser, Serializer}
   alias CoAP.Server.State
 
   def init({module, inner_args, opts}) do
@@ -111,7 +113,7 @@ defmodule CoAP.Server.Adapter do
   end
 
   def handle_cast({:message, from, msg}, state) do
-    case CoAP.Message.type(msg) do
+    case Message.type(msg) do
       :confirmable ->
         inner_call state, msg, from, &(&1.handle_confirmable(msg, from, &2))
       _ ->
@@ -127,7 +129,7 @@ defmodule CoAP.Server.Adapter do
     IO.inspect {:from, address, port, data}
     from = {address, port}
     try do
-      msg = CoAP.Parser.parse(data)
+      msg = Parser.parse(data)
       GenServer.cast(self, {:message, from, msg})
     rescue
       e -> GenServer.cast(self, {:invalid, from, e})
@@ -139,7 +141,6 @@ defmodule CoAP.Server.Adapter do
     inner_cast state, &(&1.handle_info(info, &2))
   end
 
-  # it has to return a message to a cast
   defp inner_call(state, msg, from, action) do
     #TODO copy token from original msg, if missing
     case action.(state.module, state.inner_state) do
@@ -150,16 +151,16 @@ defmodule CoAP.Server.Adapter do
         udp_send(state.udp, from, reply)
         {:noreply, update_state(state, new_inner_state), timeout}
       {:noreply, new_inner_state} ->
-        udp_send(state.udp, from, CoAP.Message.ack(msg))
+        udp_send(state.udp, from, Message.ack(msg))
         {:noreply, update_state(state, new_inner_state)}
       {:noreply, new_inner_state, timeout} ->
-        udp_send(state.udp, from, CoAP.Message.ack(msg))
+        udp_send(state.udp, from, Message.ack(msg))
         {:noreply, update_state(state, new_inner_state), timeout}
       {:stop, reason, reply, new_inner_state} ->
-        udp_send(state.udp, from, CoAP.Message.ack(msg))
+        udp_send(state.udp, from, Message.ack(msg))
         {:stop, reason, reply, new_inner_state}
       {:stop, reason, new_inner_state} ->
-        udp_send(state.udp, from, CoAP.Message.ack(msg))
+        udp_send(state.udp, from, Message.ack(msg))
         {:stop, reason, update_state(state, new_inner_state)}
     end
   end
@@ -191,7 +192,7 @@ defmodule CoAP.Server.Adapter do
   defp udp_send(udp, {from_addr, from_port}, response) do
     IO.inspect {:to, from_addr, :from_port, response}
     try do
-      data = CoAP.Serializer.serialize(response)
+      data = Serializer.serialize(response)
       case UDP.send(udp, from_addr, from_port, data) do
         :ok -> {}#TODO
         {:error, _reason} -> {}#TODO handle_invalid
