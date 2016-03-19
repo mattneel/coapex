@@ -9,6 +9,15 @@ defmodule CoAP.Client do
 
   @max_message_id 65536
 
+  @type client :: pid
+
+  @type on_start :: {:ok, pid} | :ignore | {:error, {:already_started, pid} | term}
+
+  @type address :: :inet.ip_address | :inet.hostname
+
+  @type msg :: CoAP.Message.t
+
+  @spec start_link :: on_start
   def start_link do
     GenServer.start_link(__MODULE__, [])
   end
@@ -78,6 +87,7 @@ defmodule CoAP.Client do
     end
   end
 
+  @spec request(client, address, port :: :inet.port_number, msg, timeout) :: {:ok, msg} | {:error, term}
   def request(client, address, port, msg, timeout \\ 5000) do
     task = self
     GenServer.cast(client, {:request, {address, port}, msg, task})

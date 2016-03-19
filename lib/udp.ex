@@ -9,6 +9,15 @@ defmodule UDP do
 
   @defaults [port: 3535, handlers: [], udp_options: []]
 
+  @type udp :: pid
+
+  @type msg :: CoAP.Message.t
+
+  @type address :: :inet.ip_address | :inet.hostname
+
+  @type on_start :: {:ok, pid} | :ignore | {:error, {:already_started, pid} | term}
+
+  @spec start_link(options :: {atom, term}) :: on_start
   def start_link(options) do
     options = is_list(options) && options || []
     options = Keyword.merge(@defaults, options)
@@ -44,15 +53,18 @@ defmodule UDP do
     {:noreply, state}
   end
 
+  @spec send(udp, address, port :: :inet.port_number, msg) :: :ok | {:error, term}
   def send(udp, address, port, msg) do
     GenServer.call(udp, {:send, address, port, msg})
   end
 
+  @spec send(udp, uri :: char_list, msg) :: :ok | {:error, term}
   def send(udp, uri, msg) do
     parsed_uri = URI.parse(uri)
     send(udp, String.to_atom(parsed_uri.host), parsed_uri.port, msg)
   end
 
+  @spec listen(udp, handler :: pid) :: {:ok, reference} | {:error, term}
   def listen(udp, handler \\ self) when is_pid(handler) do
     GenServer.call(udp, {:listen, handler})
   end
@@ -67,7 +79,7 @@ defmodule UDP.Handler do
     {:ok, handler}
   end
 
-  def handle_event(datagram = {:datagram, data}, handler) do
+  def handle_event(datagram = {:datagram, _data}, handler) do
     send handler, datagram
     {:ok, handler}
   end

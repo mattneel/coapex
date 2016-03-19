@@ -40,6 +40,9 @@ defmodule CoAP.Server do
     end
   end
 
+  @type on_start :: {:ok, pid} | :ignore | {:error, {:already_started, pid} | term}
+
+  @spec start_link(module :: atom, args :: any, opts :: {atom, term}) :: on_start
   def start_link(module, args, opts \\ []) do
     GenServer.start_link(CoAP.Server.Adapter, {module, args, opts})
   end
@@ -113,7 +116,7 @@ defmodule CoAP.Server.Adapter do
   end
 
   def handle_cast({:message, from, msg}, state) do
-    case Message.type(msg) do
+    case CoAP.type(msg) do
       :confirmable ->
         inner_call state, msg, from, &(&1.handle_confirmable(msg, from, &2))
       _ ->
