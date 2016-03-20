@@ -16,7 +16,6 @@ defmodule OKServer do
     r = put_in(r.header.code_class, 2)
     r = put_in(r.header.code_detail, 0)
     {:reply, r, :nada}
-    # {:noreply, :nada}
   end
 
   def handle_other(message, from, :nada) do
@@ -45,6 +44,21 @@ defmodule OKServer do
 
   defp log(_entry) do
     # IO.puts(entry)
+  end
+
+end
+
+defmodule OKClient do
+
+  def request do
+    {:ok, client} = CoAP.Client.start_link port: 3535
+
+    # CoAP.Client.listen(client,)
+
+    CoAP.Client.request(client, {127,0,0,1}, 3535,
+      CoAP.message(
+        CoAP.header(:confirmable, :GET)))
+
   end
 
 end

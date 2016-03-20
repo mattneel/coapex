@@ -9,6 +9,9 @@ defmodule CoAP.Client do
 
   @max_message_id 65536
 
+  @defaults [
+    port: 0]
+
   @type client :: pid
 
   @type on_start :: {:ok, pid} | :ignore | {:error, {:already_started, pid} | term}
@@ -19,11 +22,17 @@ defmodule CoAP.Client do
 
   @spec start_link :: on_start
   def start_link do
-    GenServer.start_link(__MODULE__, [])
+    start_link([])
+  end
+
+  @spec start_link([atom: any]) :: on_start
+  def start_link(opts) do
+    opts = Keyword.merge(@defaults, is_list(opts) && opts || [])
+    GenServer.start_link(__MODULE__, opts)
   end
 
   def init(opts) do
-    with {:ok, udp} <- UDP.start_link(port: opts[:port] || 3536) do
+    with {:ok, udp} <- UDP.start_link(port: opts[:port]) do
       UDP.listen(udp)
       {:ok, %CoAP.Client.State{udp: udp}}
     end

@@ -5,6 +5,10 @@ defmodule CoAP.Server.State do
 end
 
 defmodule CoAP.Server do
+  use CoAP.Codes
+
+  @defaults [
+    port: @coap_port]
 
   defmacro __using__(_) do
     quote do
@@ -46,11 +50,6 @@ defmodule CoAP.Server do
 
   @type async_fun :: ((:start | term) -> :end | {CoAP.Message.t, term})
 
-  @spec start_link(module :: atom, args :: any, opts :: [atom: term]) :: on_start
-  def start_link(module, args, opts \\ []) do
-    GenServer.start_link(CoAP.Server.Adapter, {module, args, opts})
-  end
-
   @callback init(args :: term) ::
     {:ok, state} |
     {:ok, state, timeout | :hibernate} |
@@ -89,6 +88,12 @@ defmodule CoAP.Server do
     {:ok, new_state :: term} |
     {:error, reason :: term} when old_vsn: term | {:down, term}
 
+  @spec start_link(module :: atom, args :: any, opts :: [atom: term]) :: on_start
+  def start_link(module, args, opts \\ []) do
+    opts = Keyword.merge(@defaults, is_list(opts) && opts || [])
+    GenServer.start_link(CoAP.Server.Adapter, {module, args, opts})
+  end
+
 end
 
 defmodule CoAP.Server.Adapter do
@@ -98,7 +103,7 @@ defmodule CoAP.Server.Adapter do
   alias CoAP.Server.State
 
   def init({module, inner_args, opts}) do
-    case UDP.start_link(port: opts[:port] || 3535, handlers: []) do
+    case UDP.start_link(port: opts[:port], handlers: []) do
       {:ok, udp} ->
         UDP.listen(udp)
         state = %State{udp: udp, module: module}
