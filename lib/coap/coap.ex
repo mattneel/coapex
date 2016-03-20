@@ -88,6 +88,39 @@ defmodule CoAP do
     @classes[code_class]
   end
 
+  @spec code(msg) :: name
+  def code(%Message{header: header}) do
+    code(header)
+  end
+
+  @spec code(header) :: name
+  def code(header = %Header{}) do
+    @responses[code_pair(header)]
+  end
+
+  @spec code(msg, code_pair) :: msg
+  def code(msg = %Message{header: header}, code_pair = {_class, _detail}) do
+    put_in(msg.header, code(header, code_pair))
+  end
+
+  @spec code(msg, name) :: msg
+  def code(msg = %Message{}, name) do
+    code(msg, @codes_reverse[name])
+  end
+
+  @spec code(header, code_pair) :: header
+  def code(header = %Header{}, {class, detail}) do
+    Map.merge(header, %{
+      code_class: class,
+      code_detail: detail
+    })
+  end
+
+  @spec code(header, name) :: header
+  def code(header = %Header{}, name) do
+    code(header, @codes_reverse[name])
+  end
+
   @spec method(msg) :: name
   def method(%Message{header: header}) do
     method(header)
@@ -154,7 +187,7 @@ defmodule CoAP do
   @spec header(type_name :: name, code_name :: name, token :: binary, message_id :: non_neg_integer) :: header
   def header(type_name, code_name, token \\ <<>>, message_id \\ 0) do
     type = @types_reverse[type_name]
-    {code_class, code_detail} = @methods_reverse[code_name] || @responses_reverse[code_name]
+    {code_class, code_detail} = @codes_reverse[code_name]
     %Header{
       type: type,
       code_class: code_class,

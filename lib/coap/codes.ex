@@ -64,6 +64,10 @@ defmodule CoAP.Codes do
 
       @responses_reverse MapUtil.invert(@responses)
 
+      @codes Map.merge(@methods, @responses)
+
+      @codes_reverse MapUtil.invert(@codes)
+
       @options %{
          1 => :if_match,
          3 => :uri_host,

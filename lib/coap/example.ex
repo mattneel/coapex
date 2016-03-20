@@ -13,19 +13,18 @@ defmodule OKServer do
   def handle_confirmable(msg, from, :nada) do
     log "Received from #{inspect from} confirmable #{inspect msg}"
 
-    r = CoAP.Message.ack(msg)
-    r = put_in(r.header.code_class, 2)
-    r = put_in(r.header.code_detail, 0)
+    response = CoAP.Message.ack(msg)
+      |> CoAP.code(:ok)
 
     if CoAP.path(msg) == "/observe" do
       fun = fn
-        :start -> {r, 0}
+        :start -> {response, 0}
         10 -> :end
         n -> observe(msg, n)
       end
       {:reply_async, fun, :nada}
     else
-      {:reply, r, :nada}
+      {:reply, response, :nada}
     end
   end
 
@@ -64,7 +63,7 @@ defmodule OKServer do
   end
 
   defp log(_entry) do
-    IO.puts(_entry)
+    # IO.puts(_entry)
   end
 
 end
