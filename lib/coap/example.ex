@@ -44,18 +44,3 @@ defmodule OKServer do
   end
 
 end
-
-defmodule OKClient do
-
-  def request do
-    {:ok, client} = CoAP.Client.start_link
-    CoAP.Client.request(client, {127,0,0,1}, 3535, %CoAP.Message{
-      header: %CoAP.Header{
-        type: 0,
-        code_class: 0,
-        code_detail: 1
-      }
-    })
-  end
-
-end

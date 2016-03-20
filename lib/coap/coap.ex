@@ -100,8 +100,8 @@ defmodule CoAP do
     end
   end
 
-  @spec to_option(name, content :: any) :: option
-  def to_option(name, opt_value \\ <<>>) do
+  @spec option(name, content :: any) :: option
+  def option(name, opt_value \\ <<>>) do
     number =  @options_reverse[name]
     binary_value = case @option_formats[name] do
       :opaque -> to_string opt_value
@@ -112,8 +112,8 @@ defmodule CoAP do
     %Option{number: number, value: binary_value}
   end
 
-  @spec to_header(type_name :: name, code_name :: name, message_id :: non_neg_integer, token :: binary) :: header
-  def to_header(type_name, code_name, message_id \\ 0, token \\ <<>>) do
+  @spec header(type_name :: name, code_name :: name, token :: binary, message_id :: non_neg_integer) :: header
+  def header(type_name, code_name, token \\ <<>>, message_id \\ 0) do
     type = @types_reverse[type_name]
     {code_class, code_detail} = @methods_reverse[code_name] || @responses_reverse[code_name]
     %Header{
@@ -125,8 +125,8 @@ defmodule CoAP do
     }
   end
 
-  @spec to_message(header, options :: [option], payload :: binary) :: msg
-  def to_message(header, options, payload \\ <<>>) do
+  @spec message(header, options :: [option], payload :: binary) :: msg
+  def message(header, options \\ [], payload \\ <<>>) do
     %Message {
       header: header,
       options: options,
