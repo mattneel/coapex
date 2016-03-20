@@ -125,6 +125,7 @@ defmodule CoAP do
       :string -> to_string value
         :uint -> :binary.decode_unsigned value
        :empty -> <<>>
+       :mixed -> value
     end
   end
 
