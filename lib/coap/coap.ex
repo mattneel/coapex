@@ -100,6 +100,18 @@ defmodule CoAP do
     end
   end
 
+  @spec to_option(name, content :: any) :: option
+  def to_option(name, opt_value \\ <<>>) do
+    number =  @options_reverse[name]
+    binary_value = case @option_formats[name] do
+      :opaque -> to_string opt_value
+      :string -> to_string opt_value
+        :uint -> :binary.encode_unsigned opt_value
+       :empty -> <<>>
+    end
+    %Option{number: number, value: binary_value}
+  end
+
   defp code_pair(header = %Header{}) do
     {header.code_class, header.code_detail}
   end
