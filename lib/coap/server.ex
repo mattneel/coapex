@@ -157,10 +157,10 @@ defmodule CoAP.Server.Adapter do
         udp_send(state.udp, from, reply)
         {:noreply, update_state(state, new_inner_state), timeout}
       {:reply_async, fun, new_inner_state} ->
-        GenServer.start_link(CoAP.Server.Async, {fun, &udp_send(state.udp, from, &1)})
+        handle_async(state.udp, from, fun)
         {:noreply, update_state(state, new_inner_state)}
       {:reply_async, fun, new_inner_state, timeout} ->
-        GenServer.start_link(CoAP.Server.Async, {fun, &udp_send(state.udp, from, &1)})
+        handle_async(state.udp, from, fun)
         {:noreply, update_state(state, new_inner_state), timeout}
       {:noreply, new_inner_state} ->
         udp_send(state.udp, from, Message.ack(msg))
@@ -175,6 +175,12 @@ defmodule CoAP.Server.Adapter do
         udp_send(state.udp, from, Message.ack(msg))
         {:stop, reason, update_state(state, new_inner_state)}
     end
+  end
+
+  defp handle_async(udp, from, fun) do
+    {:ok, _pid} = GenServer.start_link(
+      {CoAP.Server.Async, make_ref},
+      {fun, &udp_send(udp, from, &1)})
   end
 
   defp inner_cast(state, action) do
