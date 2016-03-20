@@ -184,8 +184,7 @@ defmodule CoAP.Server.Adapter do
 
   defp handle_async(udp, from, fun) do
     {:ok, _pid} = GenServer.start_link(
-      {CoAP.Server.Async, make_ref},
-      {fun, &udp_send(udp, from, &1)})
+      CoAP.Server.Async, {fun, &udp_send(udp, from, &1)})
   end
 
   defp inner_cast(state, action) do
@@ -264,7 +263,7 @@ defmodule CoAP.Server.Async do
   end
 
   defp continue do
-    GenServer.cast(:continue)
+    GenServer.cast(self, :continue)
   end
 
 end

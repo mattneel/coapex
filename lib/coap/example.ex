@@ -10,16 +10,37 @@ defmodule OKServer do
     {:ok, :nada}
   end
 
-  def handle_confirmable(message, from, :nada) do
-    log "Received from #{inspect from} confirmable #{inspect message}"
-    r = CoAP.Message.ack(message)
+  def handle_confirmable(msg, from, :nada) do
+    log "Received from #{inspect from} confirmable #{inspect msg}"
+
+    r = CoAP.Message.ack(msg)
     r = put_in(r.header.code_class, 2)
     r = put_in(r.header.code_detail, 0)
-    {:reply, r, :nada}
+
+    if CoAP.path(msg) == "/observe" do
+      fun = fn
+        :start -> {r, 0}
+        10 -> :end
+        n -> observe(msg, n)
+      end
+      {:reply_async, fun, :nada}
+    else
+      {:reply, r, :nada}
+    end
   end
 
-  def handle_other(message, from, :nada) do
-    log "Received from #{inspect from} #{inspect message}"
+  defp observe(msg, n) do
+    log "Observe #{n}"
+    r = CoAP.message(
+      CoAP.header(:non_confirmable, :ok, msg.header.token),
+      [CoAP.option(:observe, n)],
+      <<?A + n>>)
+    :timer.sleep(500)
+    {r, n + 1}
+  end
+
+  def handle_other(msg, from, :nada) do
+    log "Received from #{inspect from} #{inspect msg}"
     {:noreply, :nada}
   end
 
@@ -43,22 +64,31 @@ defmodule OKServer do
   end
 
   defp log(_entry) do
-    # IO.puts(entry)
+    IO.puts(_entry)
   end
 
 end
 
 defmodule OKClient do
 
-  def request do
-    {:ok, client} = CoAP.Client.start_link port: 3535
+  def request(server_address \\ {127,0,0,1}, server_port \\ 5683) do
+    {:ok, client} = CoAP.Client.start_link
 
-    # CoAP.Client.listen(client,)
-
-    CoAP.Client.request(client, {127,0,0,1}, 3535,
+    IO.inspect CoAP.Client.request(client, server_address, server_port,
       CoAP.message(
         CoAP.header(:confirmable, :GET)))
 
+    observe_request =
+      CoAP.message(CoAP.header(:confirmable, :GET, "my-token"), [CoAP.option(:observe)])
+        |> CoAP.path("/observe")
+
+    IO.inspect CoAP.Client.request(client, server_address, server_port, observe_request)
+
+    for pair <- CoAP.Client.listen(client) |> Stream.take(10) do
+      IO.inspect pair
+    end
+
+    :ok
   end
 
 end

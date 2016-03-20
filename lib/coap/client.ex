@@ -1,6 +1,6 @@
 defmodule CoAP.Client.State do
 
-  defstruct udp: nil, requests: %{}, last_id: -1
+  defstruct udp: nil, requests: %{}, last_id: -1, messages: nil
 
 end
 
@@ -18,6 +18,8 @@ defmodule CoAP.Client do
 
   @type address :: :inet.ip_address | :inet.hostname
 
+  @type udp_port :: :inet.port_number
+
   @type msg :: CoAP.Message.t
 
   @spec start_link :: on_start
@@ -32,9 +34,14 @@ defmodule CoAP.Client do
   end
 
   def init(opts) do
-    with {:ok, udp} <- UDP.start_link(port: opts[:port]) do
+    with {:ok, messages} <- GenEvent.start_link,
+      {:ok, udp} <- UDP.start_link(port: opts[:port])
+    do
       UDP.listen(udp)
-      {:ok, %CoAP.Client.State{udp: udp}}
+      {:ok, %CoAP.Client.State{
+        udp: udp,
+        messages: messages
+      }}
     end
   end
 
@@ -66,14 +73,18 @@ defmodule CoAP.Client do
         }
         {:noreply, new_state}
       _ ->
+        GenEvent.notify(state.messages, {from, msg})
         {:noreply, state}
     end
 
   end
 
   def handle_cast({:invalid, _e, _from}, state) do
-    IO.puts :invalid
     {:noreply, state}
+  end
+
+  def handle_call(:listener, _from, state) do
+    {:reply, GenEvent.stream(state.messages), state}
   end
 
   def handle_info({:datagram, {_udp, address, port, data}}, state) do
@@ -96,7 +107,7 @@ defmodule CoAP.Client do
     end
   end
 
-  @spec request(client, address, port :: :inet.port_number, msg, timeout) :: {:ok, msg} | {:error, term}
+  @spec request(client, address, port :: udp_port, msg, timeout) :: {:ok, msg} | {:error, term}
   def request(client, address, port, msg, timeout \\ 5000) do
     task = self
     GenServer.cast(client, {:request, {address, port}, msg, task})
@@ -106,6 +117,11 @@ defmodule CoAP.Client do
     after
       timeout -> {:error, :timeout}
     end
+  end
+
+  @spec listen(client) :: GenEvent.Stream.t
+  def listen(client) do
+    GenServer.call(client, :listener)
   end
 
 end

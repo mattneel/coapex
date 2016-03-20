@@ -29,7 +29,7 @@ defmodule UDP do
       do: listen(self, handler)
 
     with {:ok, socket} <- GenUDP.open(options[:port], options[:udp_options]),
-         {:ok, events} <- GenEvent.start_link([]),
+         {:ok, events} <- GenEvent.start_link,
          do: {:ok, %UDP.State{socket: socket, events: events}}
   end
 
