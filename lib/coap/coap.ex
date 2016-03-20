@@ -31,24 +31,31 @@ defmodule CoAP do
   end
 
   @spec path(msg) :: char_list
-  def path(%Message{options: options}) do
-    uri_value = @options_reverse[:uri_path]
-    path = options
-      |> Enum.filter(fn opt -> opt.number == uri_value end)
-      |> Enum.map(&option_value/1)
-      |> Enum.join("/")
-    "/" <> path
+  def path(msg) do
+    "/" <> Enum.join(get_option_values(msg, :uri_path), "/")
   end
 
   @spec path(msg, uri_path :: char_list) :: msg
   def path(msg = %Message{options: options}, uri_path) do
-    uri_value = @options_reverse[:uri_path]
-    current_without_uri = options
-      |> Enum.filter(fn opt -> opt.number != uri_value end)
+    current_without_uri = all_options_but(msg, :uri_path)
     new_options = uri_path
       |> String.split("/", trim: true)
       |> Enum.map(fn part -> option(:uri_path, part) end)
     put_in(msg.options, current_without_uri ++ new_options)
+  end
+
+  @spec path(msg) :: integer
+  def port(msg) do
+    case get_option_values(msg, :uri_port) do
+      [] -> @coap_port
+      [first | _] -> first
+    end
+  end
+
+  @spec port(msg, value) :: msg
+  def port(msg, value) do
+    new_options = [option(:uri_port, value) | all_options_but(msg, :uri_port)]
+    put_in(msg.options, new_options)
   end
 
   @spec type(msg) :: name
@@ -153,6 +160,19 @@ defmodule CoAP do
       options: options,
       payload: payload
     }
+  end
+
+  defp get_option_values(%Message{options: options}, name) do
+    uri_value = @options_reverse[name]
+    options
+      |> Enum.filter(fn opt -> opt.number == uri_value end)
+      |> Enum.map(&option_value/1)
+  end
+
+  defp all_options_but(%Message{options: options}, name) do
+    option_number = @options_reverse[name]
+    current_without_uri = options
+      |> Enum.filter(fn opt -> opt.number != option_number end)
   end
 
   defp code_pair(header = %Header{}) do

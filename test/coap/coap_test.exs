@@ -1,10 +1,11 @@
 defmodule CoAP.Test do
   use ExUnit.Case
 
-  test "adds no option if path is empty" do
-    msg = CoAP.path(CoAP.Message.empty, "")
+  test "adds no option if path is empty or /" do
+    empty = CoAP.Message.empty
 
-    assert msg.options == []
+    assert CoAP.path(empty, "").options == []
+    assert CoAP.path(empty, "/").options == []
   end
 
   test "sets a path on a message" do
@@ -32,6 +33,17 @@ defmodule CoAP.Test do
 
   test "returns / on an empty path" do
     assert CoAP.path(CoAP.Message.empty) == "/"
+  end
+
+  test "returns default port when there is no option" do
+    assert CoAP.port(CoAP.Message.empty) == 5683
+  end
+
+  test "sets a port" do
+    msg = CoAP.port(CoAP.Message.empty, 12345)
+
+    assert msg.options == [%CoAP.Option{number: 7, value: "09"}]
+    assert CoAP.port(msg) == 12345
   end
 
 end
