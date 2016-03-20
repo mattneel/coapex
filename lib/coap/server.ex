@@ -42,12 +42,14 @@ defmodule CoAP.Server do
 
   @type on_start :: {:ok, pid} | :ignore | {:error, {:already_started, pid} | term}
 
+  @type sender :: {:inet.ip_address | :inet.hostname, :inet.port_number}
+
+  @type async_fun :: ((:start | term) -> :end | {CoAP.Message.t, term})
+
   @spec start_link(module :: atom, args :: any, opts :: {atom, term}) :: on_start
   def start_link(module, args, opts \\ []) do
     GenServer.start_link(CoAP.Server.Adapter, {module, args, opts})
   end
-
-  @type sender :: {:inet.ip_address | :inet.hostname, :inet.port_number}
 
   @callback init(args :: term) ::
     {:ok, state} |
@@ -57,7 +59,9 @@ defmodule CoAP.Server do
 
   @callback handle_confirmable(message :: CoAP.Message.t, from :: sender, state :: term) ::
     {:reply, reply, new_state} |
-    {:reply, reply, new_state, timeout | :hibernate} | #TODO {:reply_async, _}
+    {:reply, reply, new_state, timeout | :hibernate} |
+    {:reply_async, async_fun, new_state} |
+    {:reply_async, async_fun, new_state, timeout | :hibernate} |
     {:noreply, new_state} |
     {:noreply, new_state, timeout | :hibernate} |
     {:stop, reason, reply, new_state} |
@@ -152,6 +156,12 @@ defmodule CoAP.Server.Adapter do
       {:reply, reply, new_inner_state, timeout} ->
         udp_send(state.udp, from, reply)
         {:noreply, update_state(state, new_inner_state), timeout}
+      {:reply_async, fun, new_inner_state} ->
+        GenServer.start_link(CoAP.Server.Async, {fun, &udp_send(state.udp, from, &1)})
+        {:noreply, update_state(state, new_inner_state)}
+      {:reply_async, fun, new_inner_state, timeout} ->
+        GenServer.start_link(CoAP.Server.Async, {fun, &udp_send(state.udp, from, &1)})
+        {:noreply, update_state(state, new_inner_state), timeout}
       {:noreply, new_inner_state} ->
         udp_send(state.udp, from, Message.ack(msg))
         {:noreply, update_state(state, new_inner_state)}
@@ -205,6 +215,45 @@ defmodule CoAP.Server.Adapter do
 
   defp update_state(state, new_inner_state) do
     %{state | inner_state: new_inner_state}
+  end
+
+end
+
+defmodule CoAP.Server.Async do
+  use GenServer
+
+  @inital_state :start
+
+  @final_state :end
+
+  def init({fun, send}) do
+    continue
+    {:ok, {fun, send, @inital_state}}
+  end
+
+  def handle_cast(:continue, {fun, send, state}) do
+    case run_safe(fun, state) do
+      @final_state ->
+        {:stop, :normal, @final_state}
+      {msg, new_state} ->
+        send.(msg)
+        continue
+        {:noreply, {fun, send, new_state}}
+      _ ->
+        {:stop, :normal, @final_state}
+    end
+  end
+
+  defp run_safe(fun, state) do
+    try do
+      fun.(state)
+    rescue
+      _ -> @final_state
+    end
+  end
+
+  defp continue do
+    GenServer.cast(:continue)
   end
 
 end
