@@ -34,6 +34,8 @@ defmodule CoAP.Codes do
         {0, 4} => :DELETE
       }
 
+      @methods_reverse MapUtil.invert(@methods)
+
       @responses %{
         {0,  0} => :empty,
         {2,  1} => :created,

@@ -112,6 +112,28 @@ defmodule CoAP do
     %Option{number: number, value: binary_value}
   end
 
+  @spec to_header(type_name :: name, code_name :: name, message_id :: non_neg_integer, token :: binary) :: header
+  def to_header(type_name, code_name, message_id \\ 0, token \\ <<>>) do
+    type = @types_reverse[type_name]
+    {code_class, code_detail} = @methods_reverse[code_name] || @responses_reverse[code_name]
+    %Header{
+      type: type,
+      code_class: code_class,
+      code_detail: code_detail,
+      message_id: message_id,
+      token: token
+    }
+  end
+
+  @spec to_message(header, options :: [option], payload :: binary) :: msg
+  def to_message(header, options, payload \\ <<>>) do
+    %Message {
+      header: header,
+      options: options,
+      payload: payload
+    }
+  end
+
   defp code_pair(header = %Header{}) do
     {header.code_class, header.code_detail}
   end
