@@ -38,6 +38,7 @@ defmodule CoAP.Codes do
 
       @responses %{
         {0,  0} => :empty,
+        {2,  0} => :ok
         {2,  1} => :created,
         {2,  2} => :deleted,
         {2,  3} => :valid,
