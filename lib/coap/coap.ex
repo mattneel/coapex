@@ -1,11 +1,13 @@
 defmodule CoAP do
   use CoAP.Codes
 
-  alias CoAP.{Message, Header}
+  alias CoAP.{Message, Header, Option}
 
   @type header :: Header.t
 
   @type msg :: Message.t
+
+  @type option :: Option.t
 
   @type code_pair :: {integer, integer}
 
@@ -86,6 +88,16 @@ defmodule CoAP do
   @spec response_code(name) :: code_pair
   def response_code(name) when is_atom(name) do
     @responses_reverse[name]
+  end
+
+  @spec option_value(option) :: integer | binary | char_list
+  def option_value(%Option{number: number, value: value}) do
+    case @option_formats[@options[number]] do
+      :opaque -> value
+      :string -> to_string value
+        :uint -> :binary.decode_unsigned value
+       :empty -> <<>>
+    end
   end
 
   defp code_pair(header = %Header{}) do

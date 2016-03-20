@@ -81,13 +81,31 @@ defmodule CoAP.Codes do
 
       @options_reverse MapUtil.invert(@options)
 
-      @formats %{
+      @mime_types %{
          0 => :text_plain_charset_utf_8,
         40 => :application_link_format,
         41 => :application_xml,
         42 => :application_octet_stream,
         47 => :application_exi,
         50 => :application_json
+      }
+
+      @option_formats %{
+              :if_match => :opaque,
+              :uri_host => :string,
+                  :etag => :opaque,
+         :if_none_match => :empty,
+              :uri_port => :uint,
+         :location_path => :string,
+              :uri_path => :string,
+        :content_format => :uint,
+               :max_age => :uint,
+             :uri_query => :string,
+                :accept => :uint,
+        :location_query => :string,
+             :proxy_uri => :string,
+          :proxy_scheme => :string,
+                 :size1 => :uint
       }
 
     end
