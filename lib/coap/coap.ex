@@ -121,6 +121,46 @@ defmodule CoAP do
     code(header, @codes_reverse[name])
   end
 
+  @spec message_id(msg) :: non_neg_integer
+  def message_id(%Message{header: header}) do
+    message_id(header)
+  end
+
+  @spec message_id(header) :: non_neg_integer
+  def message_id(%Header{message_id: message_id}) do
+    message_id
+  end
+
+  @spec message_id(msg, value) :: msg
+  def message_id(msg = %Message{header: header}, value) do
+    put_in(msg.header, message_id(header, value))
+  end
+
+  @spec message_id(header, value) :: header
+  def message_id(header = %Header{}, value) do
+    put_in(header.message_id, value)
+  end
+
+  @spec token(msg) :: binary
+  def token(%Message{header: header}) do
+    token(header)
+  end
+
+  @spec token(header) :: binary
+  def token(%Header{token: token}) do
+    token
+  end
+
+  @spec token(msg, t :: binary) :: msg
+  def token(msg = %Message{header: header}, t) do
+    put_in(msg.header, token(header, t))
+  end
+
+  @spec token(header, t :: binary) :: header
+  def token(header = %Header{}, t) do
+    put_in(header.token, t)
+  end
+
   @spec method(msg) :: name
   def method(%Message{header: header}) do
     method(header)
