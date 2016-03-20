@@ -24,4 +24,8 @@ defmodule CoAP.Message do
     }
   end
 
+  def empty do
+    %CoAP.Message{header: %CoAP.Header{}}
+  end
+
 end
