@@ -49,7 +49,7 @@ defmodule UDP do
   end
 
   def handle_info({:udp, _port_id, address, port, msg}, state) do
-    GenEvent.notify(state.events, {:datagram, {self, address, port, to_string msg}})
+    GenEvent.notify(state.events, {:datagram, {self, address, port, :binary.list_to_bin msg}})
     {:noreply, state}
   end
 

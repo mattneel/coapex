@@ -77,7 +77,7 @@ defmodule CoAP do
 
   @spec code_string(header) :: char_list
   def code_string(header = %Header{}) do
-    :io.format "~B.~2..0B", Tuple.to_list(code_pair(header))
+    to_string :io_lib.format "~B.~2..0B", Tuple.to_list(code_pair(header))
   end
 
   @spec response_code(code_pair) :: name

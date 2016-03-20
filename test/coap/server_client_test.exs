@@ -18,7 +18,7 @@ defmodule CoAP.ServerClient.Test do
       }
     }
 
-    assert CoAP.empty? response
+    assert CoAP.code_string(response) == "2.00"
     assert CoAP.type(response) == :acknowledgement
     assert response.header.token == "oi"
   end

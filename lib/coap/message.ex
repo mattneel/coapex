@@ -6,6 +6,10 @@ defmodule CoAP.Message do
     update_in(msg.options, &Enum.sort_by(&1, fn opt -> opt.number end))
   end
 
+  def invert_options(msg) do
+    update_in(msg.options, &Enum.reverse/1)
+  end
+
   def ack(request_msg) do
     {code_class, code_detail} = CoAP.response_code(:empty)
     %CoAP.Message{

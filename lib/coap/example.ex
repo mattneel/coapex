@@ -12,7 +12,11 @@ defmodule OKServer do
 
   def handle_confirmable(message, from, :nada) do
     log "Received from #{inspect from} confirmable #{inspect message}"
-    {:noreply, :nada}
+    r = CoAP.Message.ack(message)
+    r = put_in(r.header.code_class, 2)
+    r = put_in(r.header.code_detail, 0)
+    {:reply, r, :nada}
+    # {:noreply, :nada}
   end
 
   def handle_other(message, from, :nada) do

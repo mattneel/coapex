@@ -2,7 +2,7 @@ defmodule CoAP.Parser do
   use CoAP.Common
 
   def parse(binary) do
-    %CoAP.Message{} |> parse_header(binary) |> CoAP.Message.sort_options
+    %CoAP.Message{} |> parse_header(binary) |> CoAP.Message.invert_options
   end
 
   def parse_header(msg, header) do

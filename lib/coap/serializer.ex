@@ -42,10 +42,10 @@ defmodule CoAP.Serializer do
     cond do
       number < 13 ->
         {number, <<>>}
-      number <= 269 ->
-        {13, <<number-13 :: unsigned-size(8)>>}
+      number < 269 ->
+        {13, <<number - 13 :: unsigned-size(8)>>}
       true ->
-        {14, <<number-269 :: unsigned-size(16)>>}
+        {14, <<number - 269 :: unsigned-size(16)>>}
     end
   end
 
