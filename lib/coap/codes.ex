@@ -38,7 +38,7 @@ defmodule CoAP.Codes do
 
       @responses %{
         {0,  0} => :empty,
-        {2,  0} => :ok
+        {2,  0} => :ok,
         {2,  1} => :created,
         {2,  2} => :deleted,
         {2,  3} => :valid,
@@ -69,6 +69,7 @@ defmodule CoAP.Codes do
          3 => :uri_host,
          4 => :etag,
          5 => :if_none_match,
+         6 => :observe,
          7 => :uri_port,
          8 => :location_path,
         11 => :uri_path,
@@ -89,6 +90,7 @@ defmodule CoAP.Codes do
               :uri_host => :string,
                   :etag => :opaque,
          :if_none_match => :empty,
+               :observe => :mixed,
               :uri_port => :uint,
          :location_path => :string,
               :uri_path => :string,

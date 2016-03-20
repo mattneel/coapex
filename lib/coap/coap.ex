@@ -36,7 +36,7 @@ defmodule CoAP do
   end
 
   @spec path(msg, uri_path :: char_list) :: msg
-  def path(msg = %Message{options: options}, uri_path) do
+  def path(msg, uri_path) do
     current_without_uri = all_options_but(msg, :uri_path)
     new_options = uri_path
       |> String.split("/", trim: true)
@@ -130,14 +130,24 @@ defmodule CoAP do
 
   @spec option(name, content :: integer | binary | char_list) :: option
   def option(name, opt_value \\ <<>>) do
-    number =  @options_reverse[name]
-    binary_value = case @option_formats[name] do
+    %Option{
+      number: @options_reverse[name],
+      value: encode_option_value(@option_formats[name], opt_value)
+    }
+  end
+
+  defp encode_option_value(format, opt_value) do
+    case format do
       :opaque -> to_string opt_value
       :string -> to_string opt_value
         :uint -> :binary.encode_unsigned opt_value
        :empty -> <<>>
+       :mixed -> cond do
+          is_integer(opt_value) -> encode_option_value(:uint, opt_value)
+          is_binary(opt_value) -> opt_value
+          true -> to_string opt_value
+        end
     end
-    %Option{number: number, value: binary_value}
   end
 
   @spec header(type_name :: name, code_name :: name, token :: binary, message_id :: non_neg_integer) :: header
@@ -171,8 +181,7 @@ defmodule CoAP do
 
   defp all_options_but(%Message{options: options}, name) do
     option_number = @options_reverse[name]
-    current_without_uri = options
-      |> Enum.filter(fn opt -> opt.number != option_number end)
+    Enum.filter(options, fn opt -> opt.number != option_number end)
   end
 
   defp code_pair(header = %Header{}) do
