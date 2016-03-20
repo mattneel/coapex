@@ -46,7 +46,7 @@ defmodule CoAP.Server do
 
   @type async_fun :: ((:start | term) -> :end | {CoAP.Message.t, term})
 
-  @spec start_link(module :: atom, args :: any, opts :: {atom, term}) :: on_start
+  @spec start_link(module :: atom, args :: any, opts :: [atom: term]) :: on_start
   def start_link(module, args, opts \\ []) do
     GenServer.start_link(CoAP.Server.Adapter, {module, args, opts})
   end
