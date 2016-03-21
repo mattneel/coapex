@@ -16,26 +16,30 @@ defmodule OKServer do
     response = CoAP.Message.ack(msg)
       |> CoAP.code(:ok)
 
-    if CoAP.path(msg) == "/observe" do
-      fun = fn
-        :start -> {response, 0}
-        10 -> :end
-        n -> observe(msg, n)
-      end
-      {:reply_async, fun, :nada}
-    else
-      {:reply, response, :nada}
+    case CoAP.path(msg) do
+      "/observe" ->
+        fun = fn
+          :start -> {response, 0}
+          10 -> :end
+          n -> observe(msg, n)
+        end
+        {:reply_async, fun, :nada}
+      _ ->
+        {:reply, response, :nada}
     end
   end
 
   defp observe(msg, n) do
     log "Observe #{n}"
-    r = CoAP.message(
-      CoAP.header(:non_confirmable, :ok, msg.header.token),
-      [CoAP.option(:observe, n)],
-      <<?A + n>>)
+    response = CoAP.Message.empty
+      |> CoAP.type(:non_confirmable)
+      |> CoAP.code(:ok)
+      |> CoAP.token(msg.header.token)
+      |> CoAP.add_option(CoAP.option(:observe, n))
+      |> CoAP.payload(<<?A + n>>)
+
     :timer.sleep(500)
-    {r, n + 1}
+    {response, n + 1}
   end
 
   def handle_other(msg, from, :nada) do
@@ -73,13 +77,18 @@ defmodule OKClient do
   def request(server_address \\ {127,0,0,1}, server_port \\ 5683) do
     {:ok, client} = CoAP.Client.start_link
 
-    IO.inspect CoAP.Client.request(client, server_address, server_port,
-      CoAP.message(
-        CoAP.header(:confirmable, :GET)))
+    root_request = CoAP.Message.empty
+      |> CoAP.type(:confirmable)
+      |> CoAP.code(:GET)
 
-    observe_request =
-      CoAP.message(CoAP.header(:confirmable, :GET, "my-token"), [CoAP.option(:observe)])
-        |> CoAP.path("/observe")
+    IO.inspect CoAP.Client.request(client, server_address, server_port, root_request)
+
+    observe_request = CoAP.Message.empty
+      |> CoAP.type(:confirmable)
+      |> CoAP.code(:GET)
+      |> CoAP.token("my-token")
+      |> CoAP.path("/observe")
+      |> CoAP.add_option(CoAP.option(:observe))
 
     IO.inspect CoAP.Client.request(client, server_address, server_port, observe_request)
 

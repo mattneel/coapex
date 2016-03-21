@@ -78,6 +78,16 @@ defmodule CoAP do
     @types_reverse[name]
   end
 
+  @spec type(msg, name) :: msg
+  def type(msg = %Message{header: header}, name) do
+    put_in(msg.header, type(header, name))
+  end
+
+  @spec type(header, name) :: header
+  def type(header = %Header{}, name) do
+    put_in(header.type, @types_reverse[name])
+  end
+
   @spec class(msg) :: name
   def class(%Message{header: header}) do
     class(header)
@@ -171,6 +181,11 @@ defmodule CoAP do
     @methods[code_pair(header)]
   end
 
+  @spec payload(msg, payload :: binary) :: msg
+  def payload(msg, payload) do
+    put_in(msg.payload, payload)
+  end
+
   @spec code_string(msg) :: char_list
   def code_string(%Message{header: header}) do
     code_string(header)
@@ -179,6 +194,11 @@ defmodule CoAP do
   @spec code_string(header) :: char_list
   def code_string(header = %Header{}) do
     to_string :io_lib.format "~B.~2..0B", Tuple.to_list(code_pair(header))
+  end
+
+  @spec add_option(msg, option) :: msg
+  def add_option(msg, option) do
+    update_in(msg.options, fn options -> [option | options] end)
   end
 
   @spec response_code(code_pair) :: name
