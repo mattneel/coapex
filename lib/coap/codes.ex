@@ -94,7 +94,7 @@ defmodule CoAP.Codes do
               :uri_host => :string,
                   :etag => :opaque,
          :if_none_match => :empty,
-               :observe => :mixed,
+               :observe => :uint,
               :uri_port => :uint,
          :location_path => :string,
               :uri_path => :string,

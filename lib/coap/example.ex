@@ -88,7 +88,7 @@ defmodule OKClient do
       |> CoAP.code(:GET)
       |> CoAP.token("my-token")
       |> CoAP.path("/observe")
-      |> CoAP.add_option(CoAP.option(:observe))
+      |> CoAP.add_option(CoAP.option(:observe, 0))
 
     IO.inspect CoAP.Client.request(client, server_address, server_port, observe_request)
 

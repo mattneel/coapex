@@ -218,7 +218,6 @@ defmodule CoAP do
       :string -> to_string value
         :uint -> :binary.decode_unsigned value
        :empty -> <<>>
-       :mixed -> value
     end
   end
 
@@ -236,11 +235,6 @@ defmodule CoAP do
       :string -> to_string opt_value
         :uint -> :binary.encode_unsigned opt_value
        :empty -> <<>>
-       :mixed -> cond do
-          is_integer(opt_value) -> encode_option_value(:uint, opt_value)
-          is_binary(opt_value) -> opt_value
-          true -> to_string opt_value
-        end
     end
   end
 
