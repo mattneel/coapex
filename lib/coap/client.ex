@@ -155,7 +155,13 @@ defmodule CoAP.Client.Sender do
   end
 
   def handle_cast(:start, state) do
-    send(state)
+    case {CoAP.confirmable?(state.msg), send(state)} do
+      {false, {:noreply, new_state, _}} ->
+        send state.task, :ok
+        {:stop, :normal, new_state}
+      {_, response} ->
+        response
+    end
   end
 
   def handle_cast({:message, from, msg}, state = %State{to: to}) when from == to do

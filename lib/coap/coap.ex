@@ -30,6 +30,11 @@ defmodule CoAP do
     code_pair(header) == {0, 0}
   end
 
+  @spec confirmable?(msg) :: boolean
+  def confirmable?(msg) do
+    type(msg) == :confirmable
+  end
+
   @spec path(msg) :: char_list
   def path(msg) do
     "/" <> Enum.join(get_option_values(msg, :uri_path), "/")
