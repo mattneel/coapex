@@ -7,7 +7,7 @@ defmodule UDP do
 
   alias :gen_udp, as: GenUDP
 
-  @defaults [port: 3535, handlers: [], udp_options: []]
+  @defaults [port: 3535, handlers: [], udp_options: [:inet6]]
 
   @type udp :: pid
 
